@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Discord Bot Builder</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        :root {
+            --bg-base: #0b0d12;
+            --bg-surface: #171923;
+            --bg-elevated: #212533;
+            --border: #31364a;
+            --primary: #5865F2;
+            --primary-hover: #4752C4;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --danger: #ed4245;
+            --danger-hover: rgba(237, 66, 69, 0.1);
+            --success: #3ba55c;
+            --radius: 8px;
+            --font-sans: 'Inter', 'Segoe UI', system-ui, sans-serif;
+            --font-mono: 'JetBrains Mono', 'Courier New', Courier, monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            line-height: 1.5;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            color: var(--primary);
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .app-layout {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        @media (min-width: 768px) {
+            .app-layout {
+                grid-template-columns: 2fr 1fr;
+                align-items: start;
+            }
+        }
+
+        .card {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-main);
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-main);
+            font-family: inherit;
+            font-size: 0.95rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(88, 101, 242, 0.2);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.25rem;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+            font-size: 0.95rem;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-main);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--bg-elevated);
+        }
+
+        .btn-sm {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.85rem;
+        }
+
+        .btn-danger {
+            background-color: transparent;
+            color: var(--danger);
+            border: 1px solid transparent;
+        }
+
+        .btn-danger:hover {
+            background-color: var(--danger-hover);
+            border-color: var(--danger);
+        }
+
+        .w-full {
+            width: 100%;
+        }
+
+        .flex {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .flex-wrap {
+            flex-wrap: wrap;
+        }
+
+        .justify-between {
+            justify-content: space-between;
+        }
+
+        .align-center {
+            align-items: center;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* File Preview Styles */
+        .file-block {
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            margin-bottom: 1rem;
+            overflow: hidden;
+            background-color: var(--bg-elevated);
+        }
+
+        .file-header {
+            padding: 0.75rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.2s;
+        }
+
+        .file-header:hover {
+            background-color: var(--border);
+        }
+
+        .file-title-wrap {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+        }
+
+        .file-title-wrap::before {
+            content: '📄';
+            font-size: 1rem;
+        }
+
+        .file-header::after {
+            content: '▼';
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            transition: transform 0.2s;
+            margin-left: 1rem;
+        }
+
+        .file-header.open::after {
+            transform: rotate(180deg);
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .file-content {
+            display: none;
+            border-top: 1px solid var(--border);
+            background-color: #000;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .file-content.open {
+            display: block;
+        }
+
+        pre {
+            margin: 0;
+            padding: 1rem;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            white-space: pre-wrap;
+            word-break: break-all;
+            color: #d1d5db;
+        }
+
+        /* Project Manager Styles */
+        .project-item {
+            padding: 0.75rem;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--bg-elevated);
+            transition: border-color 0.2s;
+        }
+
+        .project-item:hover {
+            border-color: var(--primary);
+        }
+
+        .project-info {
+            cursor: pointer;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .project-prompt {
+            font-size: 0.9rem;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 0.25rem;
+        }
+
+        .project-date {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .empty-state {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            padding: 2rem 0;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-base);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>AI Discord Bot Builder</h1>
+        <p class="subtitle">Generate full Discord bots instantly using AI</p>
+    </header>
+
+    <div class="app-layout">
+        <div class="main-col">
+            <section id="input-section" class="card">
+                <div class="card-title">Bot Configuration</div>
+                
+                <div class="form-group">
+                    <label for="prompt">Bot Description & Features *</label>
+                    <textarea id="prompt" placeholder="Describe your bot... e.g., 'A moderation bot that auto-bans bad words and has a /kick command.'"></textarea>
+                </div>
+
+                <div class="flex flex-wrap">
+                    <div class="form-group w-full" style="flex: 1; min-width: 200px;">
+                        <label for="type">Bot Type</label>
+                        <select id="type">
+                            <option value="Moderation">Moderation</option>
+                            <option value="Economy">Economy</option>
+                            <option value="Music">Music</option>
+                            <option value="Custom">Custom / Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group w-full" style="flex: 1; min-width: 200px;">
+                        <label for="clientId">Client ID (Optional)</label>
+                        <input type="text" id="clientId" placeholder="123456789012345678">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="token">Bot Token (Optional - Will NOT be saved)</label>
+                    <input type="password" id="token" placeholder="MTIzNDU2Nzg5.xyz...">
+                </div>
+
+                <button id="generateBtn" class="btn w-full">Generate Bot Code</button>
+            </section>
+
+            <section id="output-section" class="card hidden">
+                <div class="flex justify-between align-center" style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border);">
+                    <div class="card-title" style="margin-bottom: 0; padding-bottom: 0; border: none;">Generated Files</div>
+                    <div class="flex">
+                        <button id="downloadZipBtn" class="btn btn-sm">Download ZIP</button>
+                        <button id="clearBtn" class="btn btn-secondary btn-sm">Clear</button>
+                    </div>
+                </div>
+
+                <div id="files-container"></div>
+            </section>
+        </div>
+
+        <div class="side-col">
+            <section id="project-manager" class="card">
+                <div class="card-title">Saved Projects</div>
+                <div id="projects-list">
+                    </div>
+            </section>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // State
+        let currentFiles = {};
+        let currentProjectId = null;
+        const STORAGE_KEY = 'discord_bot_builder_projects';
+
+        // Elements
+        const promptEl = document.getElementById('prompt');
+        const tokenEl = document.getElementById('token');
+        const clientIdEl = document.getElementById('clientId');
+        const typeEl = document.getElementById('type');
+        const generateBtn = document.getElementById('generateBtn');
+        const outputSection = document.getElementById('output-section');
+        const filesContainer = document.getElementById('files-container');
+        const downloadZipBtn = document.getElementById('downloadZipBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const projectsList = document.getElementById('projects-list');
+
+        // Event Listeners
+        generateBtn.addEventListener('click', generateBot);
+        downloadZipBtn.addEventListener('click', downloadZip);
+        clearBtn.addEventListener('click', clearOutput);
+
+        // Initialize
+        loadProjects();
+
+        // Core Functions
+        async function generateBot() {
+            const prompt = promptEl.value.trim();
+            const token = tokenEl.value.trim();
+            const clientId = clientIdEl.value.trim();
+            const type = typeEl.value;
+
+            if (!prompt) {
+                alert('Please enter a bot description.');
+                promptEl.focus();
+                return;
+            }
+
+            generateBtn.textContent = 'Generating...';
+            generateBtn.disabled = true;
+
+            try {
+                const response = await fetch("https://ai-discord-bot-seven.vercel.app/api/generate-multistep", {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt, token, clientId, type })
+});
+
+                if (!response.ok) {
+                    throw new Error(`API request failed with status ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                if (!data || !data.files) {
+                    throw new Error('Invalid JSON response: Missing files object');
+                }
+
+                currentFiles = data.files;
+                currentProjectId = data.projectId || Date.now().toString();
+
+                renderFiles();
+                saveProject(currentProjectId, prompt, currentFiles);
+                
+                // Security: Clear token from input after successful generation
+                tokenEl.value = '';
+
+            } catch (error) {
+                console.error(error);
+                alert(`Error generating bot: ${error.message}`);
+            } finally {
+                generateBtn.textContent = 'Generate Bot Code';
+                generateBtn.disabled = false;
+            }
+        }
+
+        function renderFiles() {
+            filesContainer.innerHTML = '';
+            
+            if (!currentFiles || Object.keys(currentFiles).length === 0) {
+                outputSection.classList.add('hidden');
+                return;
+            }
+
+            outputSection.classList.remove('hidden');
+            const fragment = document.createDocumentFragment();
+
+            let isFirst = true;
+
+            for (const [filename, content] of Object.entries(currentFiles)) {
+                const block = document.createElement('div');
+                block.className = 'file-block';
+
+                const header = document.createElement('div');
+                header.className = `file-header ${isFirst ? 'open' : ''}`;
+                
+                const titleWrap = document.createElement('div');
+                titleWrap.className = 'file-title-wrap';
+                titleWrap.textContent = filename;
+                
+                const actions = document.createElement('div');
+                actions.className = 'file-actions';
+                
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'btn btn-secondary btn-sm';
+                copyBtn.textContent = 'Copy';
+                copyBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    navigator.clipboard.writeText(content).then(() => {
+                        const originalText = copyBtn.textContent;
+                        copyBtn.textContent = 'Copied!';
+                        setTimeout(() => copyBtn.textContent = originalText, 2000);
+                    });
+                };
+                
+                const dlBtn = document.createElement('button');
+                dlBtn.className = 'btn btn-secondary btn-sm';
+                dlBtn.textContent = 'Download';
+                dlBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    downloadIndividualFile(filename, content);
+                };
+
+                actions.appendChild(copyBtn);
+                actions.appendChild(dlBtn);
+                header.appendChild(titleWrap);
+                header.appendChild(actions);
+
+                const contentDiv = document.createElement('div');
+                contentDiv.className = `file-content ${isFirst ? 'open' : ''}`;
+                const pre = document.createElement('pre');
+                pre.innerHTML = escapeHTML(content);
+                contentDiv.appendChild(pre);
+
+                header.onclick = (e) => {
+                    if (e.target !== copyBtn && e.target !== dlBtn) {
+                        contentDiv.classList.toggle('open');
+                        header.classList.toggle('open');
+                    }
+                };
+
+                block.appendChild(header);
+                block.appendChild(contentDiv);
+                fragment.appendChild(block);
+                
+                isFirst = false;
+            }
+
+            filesContainer.appendChild(fragment);
+            
+            // Scroll to output
+            outputSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // Project Management
+        function saveProject(id, promptText, filesObj) {
+            let projects = getProjects();
+            const existingIndex = projects.findIndex(p => p.id === id);
+            
+            const projectData = {
+                id: id,
+                prompt: promptText,
+                files: filesObj,
+                createdAt: existingIndex > -1 ? projects[existingIndex].createdAt : new Date().toISOString()
+            };
+
+            if (existingIndex > -1) {
+                projects[existingIndex] = projectData;
+            } else {
+                projects.unshift(projectData);
+            }
+
+            // Keep only latest 20 projects to save storage
+            if (projects.length > 20) {
+                projects = projects.slice(0, 20);
+            }
+
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+            loadProjects();
+        }
+
+        function getProjects() {
+            try {
+                const data = localStorage.getItem(STORAGE_KEY);
+                return data ? JSON.parse(data) : [];
+            } catch (e) {
+                console.error("Failed to parse projects from localStorage", e);
+                return [];
+            }
+        }
+
+        function loadProjects() {
+            const projects = getProjects();
+            projectsList.innerHTML = '';
+            
+            if (projects.length === 0) {
+                projectsList.innerHTML = '<div class="empty-state">No saved projects yet.</div>';
+                return;
+            }
+
+            const fragment = document.createDocumentFragment();
+            projects.forEach(p => {
+                const item = document.createElement('div');
+                item.className = 'project-item';
+
+                const info = document.createElement('div');
+                info.className = 'project-info';
+                
+                const promptSnippet = p.prompt.length > 40 ? p.prompt.substring(0, 40) + '...' : p.prompt;
+                
+                info.innerHTML = `
+                    <div class="project-prompt" title="${escapeHTML(p.prompt)}">${escapeHTML(promptSnippet)}</div>
+                    <div class="project-date">${new Date(p.createdAt).toLocaleString()}</div>
+                `;
+                
+                info.onclick = () => {
+                    currentFiles = p.files;
+                    currentProjectId = p.id;
+                    promptEl.value = p.prompt;
+                    tokenEl.value = ''; // Ensure token isn't repopulated
+                    renderFiles();
+                };
+
+                const delBtn = document.createElement('button');
+                delBtn.className = 'btn btn-danger btn-sm';
+                delBtn.textContent = 'Del';
+                delBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    if (confirm('Delete this saved project?')) {
+                        deleteProject(p.id);
+                    }
+                };
+
+                item.appendChild(info);
+                item.appendChild(delBtn);
+                fragment.appendChild(item);
+            });
+
+            projectsList.appendChild(fragment);
+        }
+
+        function deleteProject(id) {
+            let projects = getProjects();
+            projects = projects.filter(proj => proj.id !== id);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+            
+            if (currentProjectId === id) {
+                clearOutput();
+            }
+            
+            loadProjects();
+        }
+
+        // File Utilities
+        async function downloadZip() {
+            if (!currentFiles || Object.keys(currentFiles).length === 0) return;
+            
+            if (typeof JSZip === 'undefined') {
+                alert('JSZip library is still loading. Please try again in a moment.');
+                return;
+            }
+
+            const zip = new JSZip();
+            
+            for (const [filename, content] of Object.entries(currentFiles)) {
+                zip.file(filename, content);
+            }
+
+            try {
+                downloadZipBtn.textContent = 'Zipping...';
+                downloadZipBtn.disabled = true;
+                
+                const blob = await zip.generateAsync({ type: 'blob' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'discord-bot.zip';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } catch (e) {
+                console.error(e);
+                alert('Error generating ZIP file: ' + e.message);
+            } finally {
+                downloadZipBtn.textContent = 'Download ZIP';
+                downloadZipBtn.disabled = false;
+            }
+        }
+
+        function downloadIndividualFile(filename, content) {
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename.split('/').pop(); // Save just the file name, no path
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function clearOutput() {
+            currentFiles = {};
+            currentProjectId = null;
+            promptEl.value = '';
+            tokenEl.value = '';
+            clientIdEl.value = '';
+            outputSection.classList.add('hidden');
+            filesContainer.innerHTML = '';
+        }
+
+        // Helpers
+        function escapeHTML(str) {
+            return String(str).replace(/[&<>'"]/g, function (tag) {
+                const chars = {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    "'": '&#39;',
+                    '"': '&quot;'
+                };
+                return chars[tag] || tag;
+            });
+        }
+    });
+</script>
+</body>
+</html>
